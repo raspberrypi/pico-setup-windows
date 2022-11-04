@@ -30,6 +30,8 @@ $version = (Get-Content "$PSScriptRoot\version.txt").Trim()
 $suffix = [io.path]::GetFileNameWithoutExtension($ConfigFile)
 $outfile = "bin\$basename-$version-$suffix.exe"
 
+$programGroupName = '$SMPROGRAMS\Raspberry Pi Pico SDK 1.4'
+
 $tools = (Get-Content '.\tools.json' | ConvertFrom-Json).tools
 $config = Get-Content $ConfigFile | ConvertFrom-Json
 $bitness = $config.bitness
@@ -99,23 +101,24 @@ $env:CHERE_INVOKING = 'yes'
 # Start MINGW32/64 environment
 $env:MSYSTEM = "MINGW$bitness"
 
-if (-not (Test-Path ".\build\openocd-install\mingw$bitness")) {
-  # First run setup
-  msys 'uname -a'
-  # Core update
-  msys 'pacman --noconfirm -Syuu'
-  # Normal update
-  msys 'pacman --noconfirm -Suu'
+# Disable openocd build for now (using a manually built copy instead)
+# if (-not (Test-Path ".\build\openocd-install\mingw$bitness")) {
+#   # First run setup
+#   msys 'uname -a'
+#   # Core update
+#   msys 'pacman --noconfirm -Syuu'
+#   # Normal update
+#   msys 'pacman --noconfirm -Suu'
 
-  msys "pacman -S --noconfirm --needed autoconf automake git libtool make mingw-w64-${mingw_arch}-toolchain mingw-w64-${mingw_arch}-libusb p7zip pkg-config wget"
+#   msys "pacman -S --noconfirm --needed autoconf automake git libtool make mingw-w64-${mingw_arch}-toolchain mingw-w64-${mingw_arch}-libusb mingw-w64-${mingw_arch}-hidapi p7zip pkg-config wget"
 
-  # Keep it clean
-  if (Test-Path .\build\openocd) {
-    Remove-Item .\build\openocd -Recurse -Force
-  }
+#   # Keep it clean
+#   if (Test-Path .\build\openocd) {
+#     Remove-Item .\build\openocd -Recurse -Force
+#   }
 
-  msys "cd build && ../build-openocd.sh $bitness $mingw_arch"
-}
+#   msys "cd build && ../build-openocd.sh $bitness $mingw_arch"
+# }
 
 if (-not (Test-Path ".\build\libusb")) {
   msys '7z x -obuild/libusb ./installers/libusb.7z'
@@ -255,15 +258,36 @@ LangString DESC_SecCodeExts `${LANG_ENGLISH} "Recommended extensions for Visual 
 
 Section "OpenOCD" SecOpenOCD
 
-  SetOutPath "`$INSTDIR\tools\openocd-picoprobe"
-  File "build\openocd-install\mingw$bitness\bin\*.*"
-  File "build\libusb\mingw$bitness\dll\libusb-1.0.dll"
+  SetOutPath "`$INSTDIR\tools\openocd"
+  File "build\openocd-package\*.*"
   SetOutPath "`$INSTDIR\tools\openocd-picoprobe\scripts"
   File /r "build\openocd-install\mingw$bitness\share\openocd\scripts\*.*"
 
 SectionEnd
 
-LangString DESC_SecOpenOCD `${LANG_ENGLISH} "Open On-Chip Debugger with picoprobe support"
+LangString DESC_SecOpenOCD `${LANG_ENGLISH} "Open On-Chip Debugger"
+
+Section "Pico SDK" SecPicoSDK
+
+  SetOutPath "`$INSTDIR\pico-sdk"
+  File /r "build\pico-sdk\*.*"
+
+  SetOutPath "`$INSTDIR\pico-sdk-tools"
+  File "build\pico-sdk-tools\*.*"
+  WriteRegStr HKCU "Software\Kitware\CMake\Packages\pico-sdk-tools" "v$version" "`$INSTDIR\pico-sdk-tools"
+
+SectionEnd
+
+LangString DESC_SecPicoSDK `${LANG_ENGLISH} "Pico SDK and pre-compiled tools"
+
+Section "Ninja" SecNinja
+
+  SetOutPath "`$INSTDIR\tools"
+  File "installers\ninja.exe"
+
+SectionEnd
+
+LangString DESC_SecNinja `${LANG_ENGLISH} "Ninja"
 
 Section /o "Zadig" SecZadig
 
@@ -281,15 +305,17 @@ Section "Pico environment" SecPico
   File "pico-setup.cmd"
   File "docs\ReadMe.txt"
 
-  CreateShortcut "`$INSTDIR\Developer Command Prompt for Pico.lnk" "cmd.exe" '/k "`$INSTDIR\pico-env.cmd"'
+  CreateDirectory "$programGroupName"
+
+  CreateShortcut "$programGroupName\Developer Command Prompt for Pico.lnk" "cmd.exe" '/k "`$INSTDIR\pico-env.cmd"'
 
   ; Unconditionally create a shortcut for VS Code -- in case the user had it
   ; installed already, or if they install it later
-  CreateShortcut "`$INSTDIR\Visual Studio Code for Pico.lnk" "cmd.exe" '/c (call "`$INSTDIR\pico-env.cmd" && code) || pause'
+  CreateShortcut "$programGroupName\Visual Studio Code for Pico.lnk" "cmd.exe" '/c (call "`$INSTDIR\pico-env.cmd" && code) || pause'
 
   ; SetOutPath is needed here to set the working directory for the shortcut
   SetOutPath "`$INSTDIR\pico-project-generator"
-  CreateShortcut "`$INSTDIR\Pico Project Generator.lnk" "cmd.exe" '/c (call "`$INSTDIR\pico-env.cmd" && python "`$INSTDIR\pico-project-generator\pico_project.py" --gui) || pause'
+  CreateShortcut "$programGroupName\Pico Project Generator.lnk" "cmd.exe" '/c (call "`$INSTDIR\pico-env.cmd" && python "`$INSTDIR\pico-project-generator\pico_project.py" --gui) || pause'
 
   ; Reset working dir for pico-setup.cmd launched from the finish page
   SetOutPath "`$INSTDIR"
@@ -318,6 +344,8 @@ LangString DESC_SecDocs `${LANG_ENGLISH} "Adds a script to download the latest P
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT `${SecCodeExts} `$(DESC_SecCodeExts)
   !insertmacro MUI_DESCRIPTION_TEXT `${SecOpenOCD} `$(DESC_SecOpenOCD)
+  !insertmacro MUI_DESCRIPTION_TEXT `${SecPicoSDK} `$(DESC_SecPicoSDK)
+  !insertmacro MUI_DESCRIPTION_TEXT `${SecNinja} `$(DESC_SecNinja)
   !insertmacro MUI_DESCRIPTION_TEXT `${SecZadig} `$(DESC_SecZadig)
   !insertmacro MUI_DESCRIPTION_TEXT `${SecPico} `$(DESC_SecPico)
   !insertmacro MUI_DESCRIPTION_TEXT `${SecDocs} `$(DESC_SecDocs)

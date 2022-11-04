@@ -33,10 +33,12 @@ for %%i in (sdk examples extras playground) do (
   )
 )
 
-if exist "%~dp0tools\openocd-picoprobe" (
-  echo OPENOCD_SCRIPTS=%~dp0tools\openocd-picoprobe\scripts
-  set "OPENOCD_SCRIPTS=%~dp0tools\openocd-picoprobe\scripts"
-  set "PATH=%~dp0tools\openocd-picoprobe;%PATH%"
+call :AddToPath "%~dp0tools"
+
+if exist "%~dp0tools\openocd" (
+  echo OPENOCD_SCRIPTS=%~dp0tools\openocd\scripts
+  set "OPENOCD_SCRIPTS=%~dp0tools\openocd\scripts"
+  set "PATH=%~dp0tools\openocd;%PATH%"
 )
 
 call :AddToPath "%ProgramFiles(x86)%\doxygen\bin"
@@ -47,20 +49,9 @@ call :AddToPath "%ProgramFiles(x86)%\Graphviz\bin"
 call :AddToPath "%ProgramFiles%\Graphviz\bin"
 call :AddToPath "%ProgramW6432%\Graphviz\bin"
 
-call :AddToPath "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer"
-call :AddToPath "%ProgramFiles%\Microsoft Visual Studio\Installer"
-
-rem https://github.com/microsoft/vswhere/wiki/Start-Developer-Command-Prompt
-
-for /f "usebackq delims=" %%i in (`vswhere.exe -products * -requires "Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -latest -property installationPath`) do (
-  if exist "%%i\Common7\Tools\vsdevcmd.bat" (
-    call "%%i\Common7\Tools\vsdevcmd.bat"
-  )
-)
-
 call :VerifyExe "GNU Arm Embedded Toolchain" "arm-none-eabi-gcc --version"
 call :VerifyExe "CMake" "cmake --version"
-call :VerifyExe "Visual Studio" "cl"
+call :VerifyExe "Ninja" "ninja --version"
 call :VerifyExe "Python 3" "python --version"
 call :VerifyExe "Git" "git --version"
 

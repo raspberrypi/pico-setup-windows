@@ -12,7 +12,7 @@ set "SDK_BRANCH=master"
 
 pushd "%~dp0"
 
-for %%i in (sdk examples extras playground project-generator) do (
+for %%i in (examples extras playground project-generator) do (
   set "DEST=%~dp0pico-%%i"
 
   if exist "!DEST!\.git" (
@@ -34,13 +34,11 @@ for %%i in (sdk examples extras playground project-generator) do (
 rem Build a couple of examples
 mkdir "%~dp0pico-examples\build"
 pushd "%~dp0pico-examples\build"
-cmake -G "NMake Makefiles" .. -DCMAKE_BUILD_TYPE=Debug || exit /b 1
+cmake -G Ninja .. -DCMAKE_BUILD_TYPE=Debug || exit /b 1
 
-for %%i in (blink hello_world) do (
+for %%i in (blink "hello_world/all") do (
   echo Building %%i
-  pushd %%i
-  nmake || exit /b 1
-  popd
+  ninja "%%i" || exit /b 1
 )
 
 popd
@@ -63,8 +61,8 @@ for %%i in (picoprobe) do (
   mkdir %%i\build
   pushd %%i\build
 
-  cmake -G "NMake Makefiles" .. || exit /b 1
-  nmake || exit /b 1
+  cmake -G "Ninja" .. || exit /b 1
+  ninja || exit /b 1
 
   popd
 )
