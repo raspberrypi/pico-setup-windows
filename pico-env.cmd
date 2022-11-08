@@ -35,19 +35,17 @@ for %%i in (sdk examples extras playground) do (
 
 call :AddToPath "%~dp0tools"
 
-if exist "%~dp0tools\openocd" (
-  echo OPENOCD_SCRIPTS=%~dp0tools\openocd\scripts
-  set "OPENOCD_SCRIPTS=%~dp0tools\openocd\scripts"
-  set "PATH=%~dp0tools\openocd;%PATH%"
+if exist "%~dp0openocd" (
+  echo OPENOCD_SCRIPTS=%~dp0openocd\scripts
+  set "OPENOCD_SCRIPTS=%~dp0openocd\scripts"
+  set "PATH=%~dp0openocd;%PATH%"
 )
 
-call :AddToPath "%ProgramFiles(x86)%\doxygen\bin"
-call :AddToPath "%ProgramFiles%\doxygen\bin"
-call :AddToPath "%ProgramW6432%\doxygen\bin"
-
-call :AddToPath "%ProgramFiles(x86)%\Graphviz\bin"
-call :AddToPath "%ProgramFiles%\Graphviz\bin"
-call :AddToPath "%ProgramW6432%\Graphviz\bin"
+call :AddToPath "%~dp0cmake\bin"
+call :AddToPath "%~dp0gcc-arm\bin"
+call :AddToPath "%~dp0ninja"
+call :AddToPath "%~dp0python"
+call :AddToPath "%~dp0git\cmd"
 
 call :VerifyExe "GNU Arm Embedded Toolchain" "arm-none-eabi-gcc --version"
 call :VerifyExe "CMake" "cmake --version"
