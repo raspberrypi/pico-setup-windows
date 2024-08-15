@@ -1,5 +1,19 @@
 # Pico setup for Windows
 
+We are not intending to support the pico-setup-windows installer in future.  We're instead recommending people use the Visual Studio Code Extension.
+
+https://marketplace.visualstudio.com/items?itemName=raspberry-pi.raspberry-pi-pico
+
+This has been developed to better integrate across all platforms (MacOS, Linux and Windows).
+
+To learn more, follow the [Getting Started with Raspberry Pi Pico-series](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf) tutorial.
+
+
+
+
+
+# Previous Contents
+
 [Download the latest release](https://github.com/raspberrypi/pico-setup-windows/releases/latest/download/pico-setup-windows-x64-standalone.exe)
 
 This project aims to create an easy-to-use installer to get started on Windows (using the C/C++ SDK) with [Raspberry Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) and other RP2040-based boards. It is inspired by, and is roughly equivalent to, the [pico-setup](https://github.com/raspberrypi/pico-setup) project for Linux systems.
